@@ -1,0 +1,137 @@
+/*
+ * LCD.c
+ *
+ *  Created on: Sep 30, 2023
+ *      Author: abdo
+ */
+#include "common_macros.h"
+#include "gpio.h"
+#include"LCD.h"
+#include <util/delay.h>
+#include <stdlib.h>
+void LCD_sendCommand(uint8 command) {
+
+#ifdef bit4mode
+
+	GPIO_writePin(Data_LCD, LCD_DB4_PIN_ID, GET_BIT(command, 4));
+	GPIO_writePin(Data_LCD, LCD_DB5_PIN_ID, GET_BIT(command, 5));
+	GPIO_writePin(Data_LCD, LCD_DB6_PIN_ID, GET_BIT(command, 6));
+	GPIO_writePin(Data_LCD, LCD_DB7_PIN_ID, GET_BIT(command, 7));
+	_delay_us(1);
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_LOW);
+	_delay_ms(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_HIGH);
+	_delay_ms(1);
+	GPIO_writePin(Data_LCD, LCD_DB4_PIN_ID, GET_BIT(command, 0));
+	GPIO_writePin(Data_LCD, LCD_DB5_PIN_ID, GET_BIT(command, 1));
+	GPIO_writePin(Data_LCD, LCD_DB6_PIN_ID, GET_BIT(command, 2));
+	GPIO_writePin(Data_LCD, LCD_DB7_PIN_ID, GET_BIT(command, 3));
+	_delay_ms(1);
+	GPIO_writePin(Data_LCD, EN_LCD, LOGIC_LOW);
+	_delay_ms(1);
+#else
+	GPIO_writePin(EN_RS_PORT, RS_LCD, LOGIC_LOW);
+	_delay_us(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_HIGH);
+	_delay_us(1);
+	GPIO_writePort(Data_LCD, command);
+	_delay_us(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_LOW);
+	_delay_us(1);
+#endif
+
+}
+void LCD_sendData(uint8 charx) {
+	GPIO_writePin(EN_RS_PORT, RS_LCD, LOGIC_LOW);
+	_delay_us(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_HIGH);
+	_delay_us(1);
+#ifdef bit4mode
+
+	GPIO_writePin(Data_LCD, LCD_DB4_PIN_ID, GET_BIT(charx, 4));
+	GPIO_writePin(Data_LCD, LCD_DB5_PIN_ID, GET_BIT(charx, 5));
+	GPIO_writePin(Data_LCD, LCD_DB6_PIN_ID, GET_BIT(charx, 6));
+	GPIO_writePin(Data_LCD, LCD_DB7_PIN_ID, GET_BIT(charx, 7));
+	_delay_us(1);
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_LOW);
+	_delay_ms(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_HIGH);
+	_delay_ms(1);
+	GPIO_writePin(Data_LCD, LCD_DB4_PIN_ID, GET_BIT(charx, 0));
+	GPIO_writePin(Data_LCD, LCD_DB5_PIN_ID, GET_BIT(charx, 1));
+	GPIO_writePin(Data_LCD, LCD_DB6_PIN_ID, GET_BIT(charx, 2));
+	GPIO_writePin(Data_LCD, LCD_DB7_PIN_ID, GET_BIT(charx, 3));
+	_delay_ms(1);
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_LOW);
+	_delay_ms(1);
+#else
+
+	GPIO_writePort(Data_LCD, charx);
+	_delay_us(1);
+
+	GPIO_writePin(EN_RS_PORT, EN_LCD, LOGIC_LOW);
+	_delay_us(1);
+#endif
+}
+void LCD_init(void) {
+	GPIO_setupPinDirection(EN_RS_PORT, RS_LCD, PIN_OUTPUT);
+	GPIO_setupPinDirection(EN_RS_PORT, EN_LCD, PIN_OUTPUT);
+	GPIO_setupPortDirection(Data_LCD, PORT_OUTPUT);
+	_delay_ms(20);
+
+	LCD_sendCommand(LCD_TWO_LINES_8bitMode);
+	LCD_sendCommand(LCD_cursorOFF);
+	LCD_sendCommand(LCD_clearCommand);
+
+}
+
+void LCD_displayString(char *Str) {
+	uint8 index = 0;
+	while (Str[index] != '\0') {
+		LCD_sendData(Str[index]);
+		index++;
+
+	}
+
+}
+
+void LCD_intToString(uint8 num) {
+	char buff[16];
+	itoa(num, buff, 10);
+	LCD_displayString(buff);
+
+}
+void LCD_moveCursor(uint8 row, uint8 col) {
+	uint8 lcd_memoryaddress;
+
+	switch (row) {
+	case 0:
+		lcd_memoryaddress = col;
+		break;
+	case 1:
+		lcd_memoryaddress = col + 0x40;
+		break;
+	case 2:
+		lcd_memoryaddress = col + 0x10;
+		break;
+	case 3:
+		lcd_memoryaddress = col + 0x50;
+		break;
+	}
+
+	LCD_sendCommand(lcd_memoryaddress | LCD_SET_cursorLocation);
+}
+
+void LCD_displayStringRowColumn(uint8 row, uint8 col, char *Str) {
+	LCD_moveCursor(row, col);
+	LCD_displayString(Str);
+}
+
+void LCD_clearScreen(void) {
+	LCD_sendCommand(LCD_clearCommand);
+}

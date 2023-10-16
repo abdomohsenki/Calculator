@@ -1,0 +1,42 @@
+/*
+ * LCD.h
+ *
+ *  Created on: Sep 30, 2023
+ *      Author: abdo
+ */
+
+#ifndef LCD_H_
+#define LCD_H_
+#include "std_types.h"
+#define bit4mode
+#define RS_LCD                       PIN4_ID
+#define EN_LCD                       PIN5_ID
+#define EN_RS_PORT                   PORTD_ID
+#define Data_LCD                     PORTC_ID
+
+#ifdef bit4mode
+#define LCD_DB4_PIN_ID                 PIN3_ID
+#define LCD_DB5_PIN_ID                 PIN4_ID
+#define LCD_DB6_PIN_ID                 PIN5_ID
+#define LCD_DB7_PIN_ID                 PIN6_ID
+
+#endif
+
+#define LCD_clearCommand               0x01
+#define LCD_goTOHome                   0x02
+#define LCD_TWO_LINES_8bitMode         0x38
+#define LCD_TWO_LINES_4bitMode         0x28
+#define LCD_cursorOFF                  0x0C
+#define LCD_cursorON                   0x0E
+#define LCD_SET_cursorLocation         0x80
+
+void LCD_sendCommand(uint8 command);
+void LCD_sendData(uint8 charx);
+void LCD_init(void);
+void LCD_displayString(char *Str);
+void LCD_intToString(uint8 num);
+void LCD_clearScreen(void);
+void LCD_moveCursor(uint8 row, uint8 col);
+void LCD_displayStringRowColumn(uint8 row, uint8 col, char *Str);
+
+#endif /* LCD_H_ */
